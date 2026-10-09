@@ -1,9 +1,13 @@
 const express = require('express')
 const app = express()
 const port = 8080
-
 const swaggerUi = require('swagger-ui-express')
 const swaggerDocument = require('./docs/swagger.json')
+
+app.get('/games', (req, res) => {
+    res.send(["GTA 6", "Red Dead Redemption 2", "Half-Life 2"])
+})
+
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
