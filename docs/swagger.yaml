@@ -1,0 +1,85 @@
+
+openapi: 3.0.2
+info:
+  title: Games API
+  version: 1.0.0
+  description: This is a Swagger UI for our Games API
+
+paths:
+  /games:
+    get:
+      tags:
+        - games
+      summary: Get a list of all games
+      description: Returns a list of all games in API
+      responses:
+        '200':
+          description: Returns a list of all games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    price:
+                      type: number
+              example:
+                - id: 1
+                  name: Valorant
+                  price: 0
+                - id: 2
+                  name: Minecraft
+                  price: 20
+
+  /games/{id}:
+    get:
+      tags:
+        - games
+      summary: Get full details of a game
+      description: Returns full details of a given game ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the game
+      responses:
+        '200':
+          description: Returns full details of a given game
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  price:
+                    type: number
+              example:
+                id: 1
+                name: Valorant
+                price: 0
+        '404':
+          description: Game was not found in games array
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              examples:
+                error:
+                  value:
+                    error: Error message.
+                gameNotFound:
+                  value:
+                    error: "Game \\w+ was not found in game array"
