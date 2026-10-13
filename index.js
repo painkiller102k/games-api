@@ -3,7 +3,7 @@ const app = express()
 const port = 8080
 const swaggerUi = require('swagger-ui-express')
 const yamljs = require('yamljs')
-const swaggerDocument = yamljs.load('./docs/swagger.yaml');
+const swaggerDocument = yamljs.load('./docs/swagger.yaml'); // connect swagger.yaml file
 
 const games = [
     {id:1, name: "Valorant", price: 0},
