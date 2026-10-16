@@ -99,7 +99,7 @@ paths:
                 name: Valorant
                 price: 0
         '404':
-          description: Game was not found in games array
+          description: Game was not found in games array!
           content:
             application/json:
               schema:
@@ -146,4 +146,4 @@ components:
       properties:
         error:
           type: string
-          example: One or all params are missing
+          example: One or all params are missing!
