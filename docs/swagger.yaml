@@ -1,4 +1,5 @@
 openapi: 3.0.3
+
 info:
   title: Games API
   version: 1.0.0
@@ -24,13 +25,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/game'
-              example:
-                - id: 1
-                  name: Valorant
-                  price: 0
-                - id: 2
-                  name: Minecraft
-                  price: 20
+              examples:
+                games:
+                  value:
+                    - id: 1
+                      name: Valorant
+                      price: 0
+                    - id: 2
+                      name: Minecraft
+                      price: 20
 
     post:
       tags:
@@ -45,9 +48,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/new-game'
-            example:
-              name: Tetris
-              price: 0.99
+            examples:
+              new-game:
+                value:
+                  name: Tetris
+                  price: 0.99
       responses:
         '201':
           description: Game created successfully
@@ -60,33 +65,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/game'
-              example:
-                id: 8
-                name: Tetris
-                price: 0.99
+              examples:
+                created-game:
+                  value:
+                    id: 8
+                    name: Tetris
+                    price: 0.99
         '400':
           description: One or all params are missing.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              example:
-                error: One or all params are missing
+              examples:
+                error:
+                  value:
+                    error: One or all params are missing
 
   /games/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the game
+        schema:
+          type: integer
+        example: 2
+
     get:
       tags:
         - details
       summary: Get full details of a game
-      description: Returns full details of a given id game
+      description: Returns full details of a given ID game
       operationId: getGameById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID of the game
-          schema:
-            type: integer
       responses:
         '200':
           description: Returns full details of a game
@@ -94,18 +105,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/game'
-              example:
-                id: 1
-                name: Valorant
-                price: 0
+              examples:
+                game:
+                  value:
+                    id: 1
+                    name: Valorant
+                    price: 0
         '404':
-          description: Game was not found in games array!
+          description: Game was not found in games array
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              example:
-                error: Game not found
+              examples:
+                error:
+                  value:
+                    error: Game not found
+
+    delete:
+      tags:
+        - delete-game
+      summary: Delete a game
+      description: Deletes a game by ID
+      operationId: deleteGame
+      responses:
+        '204':
+          description: Game deleted successfully
+        '404':
+          description: Game was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                error:
+                  value:
+                    error: Game not found
+      responses:
+        '204':
+          description: Game deleted successfully
+        '404':
+          description: Game was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                error:
+                  value:
+                    error: Game not found
 
 components:
   schemas:
@@ -141,9 +189,18 @@ components:
           format: float
           example: 0.99
 
+    delete-game:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          example: 2
+
     error:
       type: object
       properties:
         error:
           type: string
-          example: One or all params are missing!
+          example: Game not found

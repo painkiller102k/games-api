@@ -22,25 +22,47 @@ app.get('/games', (req, res) => {
 })
 
 app.get('/games/:id', (req, res) => {
-    if (typeof games[req.params.id - 1] === 'undefined') {
+    const game = games.find(game => game.id === Number(req.params.id))
+
+    if (!game) {
         return res.status(404).send({ error: "Game not found" })
     }
 
-    res.send(games[req.params.id - 1])
+    res.send(game)
 })
 
 app.post('/games', (req, res) => {
-    if (req.body.name == null || req.body.name === '' ||
-        req.body.price == null || req.body.price === '') {
+    if (
+        typeof req.body.name !== 'string' ||
+        req.body.name.trim() === '' ||
+        req.body.price == null ||
+        req.body.price === '' ||
+        !Number.isFinite(Number(req.body.price)) ||
+        Number(req.body.price) < 0
+    ) {
         return res.status(400).send({
-            error: 'One or all params are missing'
+            error: 'Invalid or missing name or price'
         })
     }
 
-    let game = {
-        id: games.length + 1,
-        price: req.body.price,
-        name: req.body.name
+    const name = req.body.name.trim()
+
+    const existingGame = games.find(
+        game => game.name.toLowerCase() === name.toLowerCase()
+    )
+
+    if (existingGame) {
+        return res.status(409).send({
+            error: 'Game with this name already exists'
+        })
+    }
+
+    const game = {
+        id: games.length
+            ? Math.max(...games.map(game => game.id)) + 1
+            : 1,
+        name: name,
+        price: Number(req.body.price)
     }
 
     games.push(game)
@@ -48,6 +70,20 @@ app.post('/games', (req, res) => {
     res.status(201)
         .location(`${getBaseUrl(req)}/games/${game.id}`)
         .send(game)
+})
+
+app.delete('/games/:id', (req, res) => {
+    const index = games.findIndex(
+        game => game.id === Number(req.params.id)
+    )
+
+    if (index === -1) {
+        return res.status(404).send({ error: "Game not found" })
+    }
+
+    games.splice(index, 1)
+
+    res.status(204).send()
 })
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
