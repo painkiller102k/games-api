@@ -1,96 +1,196 @@
+
 openapi: 3.0.3
 
 info:
   title: Games API
   version: 1.0.0
-  description: API for managing games
+  description: |
+    Games API with JWT authentication and two roles.
+    User can view and create games.
+    Admin can view, create, update and delete games.
 
 servers:
   - url: http://localhost:8080
 
+security:
+  - jwtLogin: []
+
+tags:
+  - name: authentication
+    description: Login and authentication
+  - name: games
+    description: Game management
+
 paths:
+  /auth/login:
+    post:
+      tags:
+        - authentication
+      summary: Login
+      description: |
+        Sign in with a username and password.
+        Use the returned token with the Authorize button.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: user
+                password:
+                  type: string
+                  format: password
+                  example: user123
+            examples:
+              regular-user:
+                summary: Regular user
+                value:
+                  username: user
+                  password: user123
+              administrator:
+                summary: Administrator
+                value:
+                  username: admin
+                  password: admin123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - username
+                  - role
+                  - token
+                  - tokenType
+                  - expiresIn
+                properties:
+                  username:
+                    type: string
+                    example: admin
+                  role:
+                    type: string
+                    enum:
+                      - User
+                      - Admin
+                    example: Admin
+                  token:
+                    type: string
+                    description: JWT access token
+                  tokenType:
+                    type: string
+                    example: Bearer
+                  expiresIn:
+                    type: string
+                    example: 1h
+              example:
+                username: admin
+                role: Admin
+                token: your-jwt-token
+                tokenType: Bearer
+                expiresIn: 1h
+        '400':
+          description: Username and password are required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                error: Username and password are required
+        '401':
+          description: Invalid username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                error: Invalid username or password
+
   /games:
     get:
       tags:
-        - details
-      summary: Get a list of all games
-      description: Returns a list of all games in API
+        - games
+      summary: Get all games
+      description: Available to User and Admin
       operationId: getGames
       responses:
         '200':
-          description: Returns a list of all games
+          description: List of games
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/game'
-              examples:
-                games:
-                  value:
-                    - id: 1
-                      name: Valorant
-                      price: 0
-                    - id: 2
-                      name: Minecraft
-                      price: 20
+              example:
+                - id: 1
+                  name: Valorant
+                  price: 0
+                - id: 2
+                  name: Minecraft
+                  price: 20
+        '401':
+          $ref: '#/components/responses/unauthorized'
 
     post:
       tags:
-        - new-game
-      summary: Creates a game
-      description: Creates a new game
+        - games
+      summary: Create a game
+      description: Available to User and Admin
       operationId: createGame
       requestBody:
-        description: A new game to be created
         required: true
+        description: Game information
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/new-game'
-            examples:
-              new-game:
-                value:
-                  name: Tetris
-                  price: 0.99
+            example:
+              name: Tetris
+              price: 0.99
       responses:
         '201':
           description: Game created successfully
           headers:
             Location:
-              description: URL of the newly created game
+              description: URL of the new game
               schema:
                 type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/game'
-              examples:
-                created-game:
-                  value:
-                    id: 8
-                    name: Tetris
-                    price: 0.99
+              example:
+                id: 8
+                name: Tetris
+                price: 0.99
         '400':
           description: Invalid or missing name or price
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Invalid or missing name or price
+              example:
+                error: Invalid or missing name or price
+        '401':
+          $ref: '#/components/responses/unauthorized'
         '409':
           description: Game with this name already exists
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Game with this name already exists
+              example:
+                error: Game with this name already exists
 
   /games/{id}:
     parameters:
@@ -104,52 +204,48 @@ paths:
 
     get:
       tags:
-        - details
-      summary: Get full details of a game
-      description: Returns full details of a given ID game
+        - games
+      summary: Get a game by ID
+      description: Available to User and Admin
       operationId: getGameById
       responses:
         '200':
-          description: Returns full details of a game
+          description: Game found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/game'
-              examples:
-                game:
-                  value:
-                    id: 2
-                    name: Minecraft
-                    price: 20
+              example:
+                id: 2
+                name: Minecraft
+                price: 20
+        '401':
+          $ref: '#/components/responses/unauthorized'
         '404':
-          description: Game was not found
+          description: Game not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Game not found
+              example:
+                error: Game not found
 
     put:
       tags:
-        - update-game
+        - games
       summary: Update a game
-      description: Updates the name and price of an existing game
+      description: Admin only
       operationId: updateGame
       requestBody:
-        description: Updated game information
         required: true
+        description: Updated game information
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/new-game'
-            examples:
-              update-game:
-                value:
-                  name: Minecraft Updated
-                  price: 25
+            example:
+              name: Minecraft Updated
+              price: 25
       responses:
         '200':
           description: Game updated successfully
@@ -157,64 +253,97 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/game'
-              examples:
-                updated-game:
-                  value:
-                    id: 2
-                    name: Minecraft Updated
-                    price: 25
+              example:
+                id: 2
+                name: Minecraft Updated
+                price: 25
         '400':
           description: Invalid or missing name or price
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Invalid or missing name or price
+              example:
+                error: Invalid or missing name or price
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
         '404':
-          description: Game was not found
+          description: Game not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Game not found
+              example:
+                error: Game not found
         '409':
           description: Game with this name already exists
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Game with this name already exists
+              example:
+                error: Game with this name already exists
 
     delete:
       tags:
-        - delete-game
+        - games
       summary: Delete a game
-      description: Deletes a game by ID
+      description: Admin only
       operationId: deleteGame
       responses:
         '204':
           description: Game deleted successfully
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
         '404':
-          description: Game was not found
+          description: Game not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Game not found
+              example:
+                error: Game not found
 
 components:
+  securitySchemes:
+    jwtLogin:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Login
+
+        1. Execute POST /auth/login.
+        2. Copy the token from the response.
+        3. Click Authorize and paste the token.
+        4. Click Authorize and then Close.
+
+        User: view and create games.
+        Admin: all game operations.
+
+  responses:
+    unauthorized:
+      description: Authentication required or token is invalid or expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            error: Authentication token is required
+
+    forbidden:
+      description: Admin role is required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            error: Admin role is required
+
   schemas:
     new-game:
       type: object
@@ -228,6 +357,7 @@ components:
         price:
           type: number
           format: float
+          minimum: 0
           example: 0.99
 
     game:
@@ -259,6 +389,8 @@ components:
 
     error:
       type: object
+      required:
+        - error
       properties:
         error:
           type: string
