@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Games API
+  version: 1.0.0
+  description: API for managing games
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /games:
+    get:
+      tags:
+        - details
+      summary: Get a list of all games
+      description: Returns a list of all games in API
+      operationId: getGames
+      responses:
+        '200':
+          description: Returns a list of all games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/game'
+              example:
+                - id: 1
+                  name: Valorant
+                  price: 0
+                - id: 2
+                  name: Minecraft
+                  price: 20
+
+    post:
+      tags:
+        - new-game
+      summary: Creates a game
+      description: Creates a new game
+      operationId: createGame
+      requestBody:
+        description: A new game to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new-game'
+            example:
+              name: Tetris
+              price: 0.99
+      responses:
+        '201':
+          description: Game created successfully
+          headers:
+            Location:
+              description: URL of the newly created game
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/game'
+              example:
+                id: 8
+                name: Tetris
+                price: 0.99
+        '400':
+          description: One or all params are missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                error: One or all params are missing
+
+  /games/{id}:
+    get:
+      tags:
+        - details
+      summary: Get full details of a game
+      description: Returns full details of a given id game
+      operationId: getGameById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the game
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns full details of a game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/game'
+              example:
+                id: 1
+                name: Valorant
+                price: 0
+        '404':
+          description: Game was not found in games array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                error: Game not found
+
+components:
+  schemas:
+    new-game:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          example: Tetris
+        price:
+          type: number
+          format: float
+          example: 0.99
+
+    game:
+      type: object
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: integer
+          example: 8
+        name:
+          type: string
+          example: Tetris
+        price:
+          type: number
+          format: float
+          example: 0.99
+
+    error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: One or all params are missing
