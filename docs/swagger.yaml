@@ -72,7 +72,7 @@ paths:
                     name: Tetris
                     price: 0.99
         '400':
-          description: One or all params are missing.
+          description: Invalid or missing name or price
           content:
             application/json:
               schema:
@@ -80,7 +80,17 @@ paths:
               examples:
                 error:
                   value:
-                    error: One or all params are missing
+                    error: Invalid or missing name or price
+        '409':
+          description: Game with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                error:
+                  value:
+                    error: Game with this name already exists
 
   /games/{id}:
     parameters:
@@ -108,29 +118,9 @@ paths:
               examples:
                 game:
                   value:
-                    id: 1
-                    name: Valorant
-                    price: 0
-        '404':
-          description: Game was not found in games array
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                error:
-                  value:
-                    error: Game not found
-
-    delete:
-      tags:
-        - delete-game
-      summary: Delete a game
-      description: Deletes a game by ID
-      operationId: deleteGame
-      responses:
-        '204':
-          description: Game deleted successfully
+                    id: 2
+                    name: Minecraft
+                    price: 20
         '404':
           description: Game was not found
           content:
@@ -141,6 +131,75 @@ paths:
                 error:
                   value:
                     error: Game not found
+
+    put:
+      tags:
+        - update-game
+      summary: Update a game
+      description: Updates the name and price of an existing game
+      operationId: updateGame
+      requestBody:
+        description: Updated game information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new-game'
+            examples:
+              update-game:
+                value:
+                  name: Minecraft Updated
+                  price: 25
+      responses:
+        '200':
+          description: Game updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/game'
+              examples:
+                updated-game:
+                  value:
+                    id: 2
+                    name: Minecraft Updated
+                    price: 25
+        '400':
+          description: Invalid or missing name or price
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                error:
+                  value:
+                    error: Invalid or missing name or price
+        '404':
+          description: Game was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                error:
+                  value:
+                    error: Game not found
+        '409':
+          description: Game with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                error:
+                  value:
+                    error: Game with this name already exists
+
+    delete:
+      tags:
+        - delete-game
+      summary: Delete a game
+      description: Deletes a game by ID
+      operationId: deleteGame
       responses:
         '204':
           description: Game deleted successfully

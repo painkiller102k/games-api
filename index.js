@@ -72,13 +72,59 @@ app.post('/games', (req, res) => {
         .send(game)
 })
 
+app.put('/games/:id', (req, res) => {
+    const game = games.find(
+        game => game.id === Number(req.params.id)
+    )
+
+    if (!game) {
+        return res.status(404).send({
+            error: "Game not found"
+        })
+    }
+
+    if (
+        typeof req.body.name !== 'string' ||
+        req.body.name.trim() === '' ||
+        req.body.price == null ||
+        req.body.price === '' ||
+        !Number.isFinite(Number(req.body.price)) ||
+        Number(req.body.price) < 0
+    ) {
+        return res.status(400).send({
+            error: 'Invalid or missing name or price'
+        })
+    }
+
+    const name = req.body.name.trim()
+
+    const existingGame = games.find(
+        otherGame =>
+            otherGame.id !== game.id &&
+            otherGame.name.toLowerCase() === name.toLowerCase()
+    )
+
+    if (existingGame) {
+        return res.status(409).send({
+            error: 'Game with this name already exists'
+        })
+    }
+
+    game.name = name
+    game.price = Number(req.body.price)
+
+    res.status(200).send(game)
+})
+
 app.delete('/games/:id', (req, res) => {
     const index = games.findIndex(
         game => game.id === Number(req.params.id)
     )
 
     if (index === -1) {
-        return res.status(404).send({ error: "Game not found" })
+        return res.status(404).send({
+            error: "Game not found"
+        })
     }
 
     games.splice(index, 1)
