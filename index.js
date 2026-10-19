@@ -1,16 +1,14 @@
+
 const express = require('express')
 const app = express()
 const port = 8080
 const swaggerUi = require('swagger-ui-express')
 const yamljs = require('yamljs')
-const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 
 const swaggerDocument = yamljs.load('./docs/swagger.yaml')
 
 app.use(express.json())
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this'
 
 const users = [
     {
@@ -35,67 +33,47 @@ const games = [
     { id: 7, name: 'Fortnite', price: 0 }
 ]
 
-// Login
-app.post('/auth/login', (req, res) => {
-    const { username, password } = req.body
+// Authentication
+function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization
 
-    if (
-        typeof username !== 'string' ||
-        typeof password !== 'string'
-    ) {
-        return res.status(400).send({
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+        res.set('WWW-Authenticate', 'Basic realm="GamesAPI"')
+        return res.status(401).send({
             error: 'Username and password are required'
         })
     }
 
+    const credentials = Buffer
+        .from(authHeader.slice(6), 'base64')
+        .toString('utf8')
+
+    const separator = credentials.indexOf(':')
+
+    if (separator === -1) {
+        res.set('WWW-Authenticate', 'Basic realm="GamesAPI"')
+        return res.status(401).send({
+            error: 'Invalid credentials'
+        })
+    }
+
+    const username = credentials.slice(0, separator)
+    const password = credentials.slice(separator + 1)
+
     const user = users.find(user => user.username === username)
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
+        res.set('WWW-Authenticate', 'Basic realm="GamesAPI"')
         return res.status(401).send({
             error: 'Invalid username or password'
         })
     }
 
-    const token = jwt.sign(
-        {
-            username: user.username,
-            role: user.role
-        },
-        JWT_SECRET,
-        { expiresIn: '1h' }
-    )
-
-    res.send({
-        username: user.username,
-        role: user.role,
-        token,
-        tokenType: 'Bearer',
-        expiresIn: '1h'
-    })
-})
-
-// Authentication
-function requireAuth(req, res, next) {
-    const authHeader = req.headers.authorization
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).send({
-            error: 'Authentication token is required'
-        })
-    }
-
-    const token = authHeader.slice(7)
-
-    try {
-        req.user = jwt.verify(token, JWT_SECRET)
-        next()
-    } catch (error) {
-        return res.status(401).send({
-            error: 'Invalid or expired token'
-        })
-    }
+    req.user = user
+    next()
 }
 
+// Admin authorization
 function requireAdmin(req, res, next) {
     if (req.user.role !== 'Admin') {
         return res.status(403).send({
@@ -106,10 +84,12 @@ function requireAdmin(req, res, next) {
     next()
 }
 
+// Get all games
 app.get('/games', requireAuth, (req, res) => {
     res.send(games)
 })
 
+// Get one game
 app.get('/games/:id', requireAuth, (req, res) => {
     const game = games.find(
         game => game.id === Number(req.params.id)
@@ -124,6 +104,7 @@ app.get('/games/:id', requireAuth, (req, res) => {
     res.send(game)
 })
 
+// Create a game
 app.post('/games', requireAuth, (req, res) => {
     if (
         typeof req.body.name !== 'string' ||
@@ -234,6 +215,6 @@ app.listen(port, () => {
 })
 
 function getBaseUrl(req) {
-    return (req.connection && req.connection.encrypted ? 'https' : 'http')
+    return (req.secure ? 'https' : 'http')
         + '://' + req.headers.host
 }
