@@ -2,126 +2,27 @@
 openapi: 3.0.3
 
 info:
-  title: Games API
+  title: GamesAPI
   version: 1.0.0
-  description: |
-    Games API with JWT authentication and two roles.
-    User can view and create games.
-    Admin can view, create, update and delete games.
+  description: API for managing games with User and Admin roles.
 
 servers:
   - url: http://localhost:8080
 
-security:
-  - jwtLogin: []
-
 tags:
-  - name: authentication
-    description: Login and authentication
-  - name: games
-    description: Game management
+  - name: GamesAPI
+    description: Game management endpoints
+
+security:
+  - basicAuth: []
 
 paths:
-  /auth/login:
-    post:
-      tags:
-        - authentication
-      summary: Login
-      description: |
-        Sign in with a username and password.
-        Use the returned token with the Authorize button.
-      operationId: login
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - username
-                - password
-              properties:
-                username:
-                  type: string
-                  example: user
-                password:
-                  type: string
-                  format: password
-                  example: user123
-            examples:
-              regular-user:
-                summary: Regular user
-                value:
-                  username: user
-                  password: user123
-              administrator:
-                summary: Administrator
-                value:
-                  username: admin
-                  password: admin123
-      responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - username
-                  - role
-                  - token
-                  - tokenType
-                  - expiresIn
-                properties:
-                  username:
-                    type: string
-                    example: admin
-                  role:
-                    type: string
-                    enum:
-                      - User
-                      - Admin
-                    example: Admin
-                  token:
-                    type: string
-                    description: JWT access token
-                  tokenType:
-                    type: string
-                    example: Bearer
-                  expiresIn:
-                    type: string
-                    example: 1h
-              example:
-                username: admin
-                role: Admin
-                token: your-jwt-token
-                tokenType: Bearer
-                expiresIn: 1h
-        '400':
-          description: Username and password are required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Username and password are required
-        '401':
-          description: Invalid username or password
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Invalid username or password
-
   /games:
     get:
       tags:
-        - games
+        - GamesAPI
       summary: Get all games
-      description: Available to User and Admin
-      operationId: getGames
+      description: Available to User and Admin.
       responses:
         '200':
           description: List of games
@@ -130,222 +31,131 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/game'
-              example:
-                - id: 1
-                  name: Valorant
-                  price: 0
-                - id: 2
-                  name: Minecraft
-                  price: 20
+                  $ref: '#/components/schemas/Game'
         '401':
-          $ref: '#/components/responses/unauthorized'
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       tags:
-        - games
+        - GamesAPI
       summary: Create a game
-      description: Available to User and Admin
-      operationId: createGame
+      description: Available to User and Admin.
       requestBody:
         required: true
-        description: Game information
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/new-game'
-            example:
-              name: Tetris
-              price: 0.99
+              $ref: '#/components/schemas/NewGame'
       responses:
         '201':
-          description: Game created successfully
-          headers:
-            Location:
-              description: URL of the new game
-              schema:
-                type: string
+          description: Game created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/game'
-              example:
-                id: 8
-                name: Tetris
-                price: 0.99
+                $ref: '#/components/schemas/Game'
         '400':
           description: Invalid or missing name or price
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Invalid or missing name or price
         '401':
-          $ref: '#/components/responses/unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '409':
           description: Game with this name already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Game with this name already exists
 
   /games/{id}:
     parameters:
       - name: id
         in: path
         required: true
-        description: ID of the game
         schema:
           type: integer
-        example: 2
+        example: 1
 
     get:
       tags:
-        - games
+        - GamesAPI
       summary: Get a game by ID
-      description: Available to User and Admin
-      operationId: getGameById
+      description: Available to User and Admin.
       responses:
         '200':
           description: Game found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/game'
-              example:
-                id: 2
-                name: Minecraft
-                price: 20
+                $ref: '#/components/schemas/Game'
         '401':
-          $ref: '#/components/responses/unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: Game not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Game not found
 
     put:
       tags:
-        - games
+        - GamesAPI
       summary: Update a game
-      description: Admin only
-      operationId: updateGame
+      description: Admin only.
       requestBody:
         required: true
-        description: Updated game information
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/new-game'
-            example:
-              name: Minecraft Updated
-              price: 25
+              $ref: '#/components/schemas/NewGame'
       responses:
         '200':
-          description: Game updated successfully
+          description: Game updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/game'
-              example:
-                id: 2
-                name: Minecraft Updated
-                price: 25
+                $ref: '#/components/schemas/Game'
         '400':
           description: Invalid or missing name or price
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Invalid or missing name or price
         '401':
-          $ref: '#/components/responses/unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/forbidden'
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Game not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Game not found
         '409':
           description: Game with this name already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Game with this name already exists
 
     delete:
       tags:
-        - games
+        - GamesAPI
       summary: Delete a game
-      description: Admin only
-      operationId: deleteGame
+      description: Admin only.
       responses:
         '204':
-          description: Game deleted successfully
+          description: Game deleted
         '401':
-          $ref: '#/components/responses/unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/forbidden'
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Game not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              example:
-                error: Game not found
 
 components:
   securitySchemes:
-    jwtLogin:
+    basicAuth:
       type: http
-      scheme: bearer
-      bearerFormat: JWT
+      scheme: basic
       description: |
-        JWT Login
+        Enter your username and password.
 
-        1. Execute POST /auth/login.
-        2. Copy the token from the response.
-        3. Click Authorize and paste the token.
-        4. Click Authorize and then Close.
-
-        User: view and create games.
-        Admin: all game operations.
-
-  responses:
-    unauthorized:
-      description: Authentication required or token is invalid or expired
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          example:
-            error: Authentication token is required
-
-    forbidden:
-      description: Admin role is required
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          example:
-            error: Admin role is required
+        User: user / user123
+        Admin: admin / admin123
 
   schemas:
-    new-game:
+    Game:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Minecraft
+        price:
+          type: number
+          example: 20
+
+    NewGame:
       type: object
       required:
         - name
@@ -353,45 +163,15 @@ components:
       properties:
         name:
           type: string
-          example: Tetris
+          example: New Game
         price:
           type: number
-          format: float
           minimum: 0
-          example: 0.99
+          example: 25
 
-    game:
-      type: object
-      required:
-        - id
-        - name
-        - price
-      properties:
-        id:
-          type: integer
-          example: 8
-        name:
-          type: string
-          example: Tetris
-        price:
-          type: number
-          format: float
-          example: 0.99
+  responses:
+    Unauthorized:
+      description: Missing or invalid username or password
 
-    delete-game:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: integer
-          example: 2
-
-    error:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-          example: Game not found
+    Forbidden:
+      description: Only Admin can perform this action
